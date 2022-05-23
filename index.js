@@ -108,6 +108,26 @@ async function run(){
 
             res.send({result, token})
         })
+
+        app.get('/order', async (req, res) => {
+            const email = req.query.customer
+            // const decodedEmail = req.decoded.email
+            // if(decodedEmail === patientEmail) {
+                const query = {email}
+                console.log(query);
+
+                const myOrder = await ordersCollection.find(query).toArray()
+                return res.send(myOrder)
+            // }
+            // else{
+            //     return res.status(403).send({ message: 'Invalid Access' })
+            // }
+        })
+
+
+
+
+
     }
     finally{
         
