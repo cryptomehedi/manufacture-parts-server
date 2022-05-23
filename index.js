@@ -21,6 +21,7 @@ async function run(){
         await client.connect()
         const partsCollection = client.db('manufacture').collection('parts')
         const usersCollection = client.db('manufacture').collection('users')
+        const ordersCollection = client.db('manufacture').collection('orders')
 
         app.get('/allParts', async (req, res) =>{
             const query = {}
@@ -66,9 +67,9 @@ async function run(){
             // const decodedEmail = req.decoded.email
             // if(email === decodedEmail){
                 const id = req.params.id
-                console.log(id);
+                console.log(id)
                 const filter = {_id : ObjectId(id)}
-                const updatedPD = req.body.delivery
+                const updatedPD = req.body.restAvailable
                 const options = { upsert: true };
                 const updateDoc = {
                     $set: updatedPD
@@ -78,8 +79,20 @@ async function run(){
             // }else{
             //     res.status(403).send({message: 'forbidden access'})
             // }
-            
-    })
+        })
+
+        app.post('/inventory', async(req, res) => {
+            // const email=  req.body.userInfo
+            // const decodedEmail = req.decoded.email
+            // if(email === decodedEmail){
+                const userOrder = req.body.orderItem
+                console.log('adding new order', userOrder )
+                const result = await ordersCollection.insertOne(userOrder)
+                res.send(result)
+            // }else{
+            //     res.status(403).send({message: 'forbidden access'})
+            // }
+        })
         
         app.put('/user/:email', async(req, res)=>{
             const email = req.params.email
