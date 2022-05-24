@@ -69,7 +69,8 @@ async function run(){
                 const id = req.params.id
                 console.log(id)
                 const filter = {_id : ObjectId(id)}
-                const updatedPD = req.body.restAvailable
+                const updatedPD = req.body.restAvailable || req.body.newAvailable
+                console.log(updatedPD);
                 const options = { upsert: true };
                 const updateDoc = {
                     $set: updatedPD
@@ -115,6 +116,11 @@ async function run(){
             res.send(user)
         })
 
+        app.get('/user', async(req, res)=>{
+            const user = await usersCollection.find().toArray()
+            res.send(user)
+        })
+
         app.put('/users/:email', async(req, res)=>{
             const email = req.params.email
             const user = req.body
@@ -126,6 +132,19 @@ async function run(){
             };
             const result = await usersCollection.updateOne(filter, updateDoc, options)
             res.send(result);
+        })
+
+        app.put('/user/admin/:email', async(req, res)=>{
+            const email = req.params.email
+            const role = req.body
+            console.log(role)
+                const filter = {email}
+                const updateDoc = {
+                    $set: role,
+                };
+                const result = await usersCollection.updateOne(filter, updateDoc)
+                return res.send({result})
+            
         })
 
         app.get('/order', async (req, res) => {
@@ -143,12 +162,31 @@ async function run(){
             // }
         })
 
+        app.get('/allOrder', async (req, res) =>{
+            const query = {}
+            const allOrder = await ordersCollection.find(query).toArray()
+            res.send(allOrder)
+        })
+
+        app.post('/parts', async(req, res) => {
+            const parts = req.body
+            const result = await partsCollection.insertOne(parts)
+            res.send(result)
+        })
 
         app.delete('/order/:id', async (req, res) => {
             const id =req.params.id
             const filter ={_id: ObjectId(id)}
             console.log(filter)
             const result = await ordersCollection.deleteOne(filter)
+            res.send(result)
+        })
+        
+        app.delete('/parts/:id', async (req, res) => {
+            const id =req.params.id
+            const filter ={_id: ObjectId(id)}
+            console.log(filter)
+            const result = await partsCollection.deleteOne(filter)
             res.send(result)
         })
 
