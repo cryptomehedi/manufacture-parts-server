@@ -22,6 +22,7 @@ async function run(){
         const partsCollection = client.db('manufacture').collection('parts')
         const usersCollection = client.db('manufacture').collection('users')
         const ordersCollection = client.db('manufacture').collection('orders')
+        const reviewsCollection = client.db('manufacture').collection('reviews')
 
         app.get('/allParts', async (req, res) =>{
             const query = {}
@@ -146,6 +147,12 @@ async function run(){
                 return res.send({result})
             
         })
+        app.get('/admin/:email',verifyToken, async(req, res)=>{
+            const email = req.params.email
+            const user = await usersCollection.findOne({email})
+            const isAdmin = user.role === 'admin'
+            res.send(isAdmin)
+        })
 
         app.get('/order', async (req, res) => {
             const email = req.query.customer
@@ -174,6 +181,20 @@ async function run(){
             res.send(result)
         })
 
+        app.post('/reviews', async(req, res) => {
+            const review = req.body
+            console.log(review);
+            const result = await reviewsCollection.insertOne(review)
+            res.send(result)
+        })
+
+        app.get('/reviews', async (req, res) =>{
+            const query = {}
+            const result = await reviewsCollection.find(query).toArray()
+            res.send(result)
+        })
+
+
         app.delete('/order/:id', async (req, res) => {
             const id =req.params.id
             const filter ={_id: ObjectId(id)}
@@ -181,7 +202,7 @@ async function run(){
             const result = await ordersCollection.deleteOne(filter)
             res.send(result)
         })
-        
+
         app.delete('/parts/:id', async (req, res) => {
             const id =req.params.id
             const filter ={_id: ObjectId(id)}
