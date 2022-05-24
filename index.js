@@ -109,6 +109,25 @@ async function run(){
             res.send({result, token})
         })
 
+        app.get('/user/:email', async(req, res)=>{
+            const email = req.params.email
+            const user = await usersCollection.findOne({email})
+            res.send(user)
+        })
+
+        app.put('/users/:email', async(req, res)=>{
+            const email = req.params.email
+            const user = req.body
+            console.log(user)
+            const filter = {email}
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
+            };
+            const result = await usersCollection.updateOne(filter, updateDoc, options)
+            res.send(result);
+        })
+
         app.get('/order', async (req, res) => {
             const email = req.query.customer
             // const decodedEmail = req.decoded.email
@@ -122,6 +141,15 @@ async function run(){
             // else{
             //     return res.status(403).send({ message: 'Invalid Access' })
             // }
+        })
+
+
+        app.delete('/order/:id', async (req, res) => {
+            const id =req.params.id
+            const filter ={_id: ObjectId(id)}
+            console.log(filter)
+            const result = await ordersCollection.deleteOne(filter)
+            res.send(result)
         })
 
 
