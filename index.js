@@ -16,6 +16,21 @@ app.use(express.json())
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.jyw9q.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+function verifyToken(req, res, next) {
+    const authorization = req.headers.authorization
+    if(!authorization){
+        return res.status(401).send({ message: 'Invalid Authorization'})
+    }
+    const token = authorization.split(' ')[1]
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET,(err, decoded)=>{
+        if(err){
+            return res.status(403).send({ message: 'Invalid Access Token' })
+        }
+        req.decoded = decoded
+        next()
+    })
+}
+
 async function run(){
     try {
         await client.connect()
@@ -23,6 +38,18 @@ async function run(){
         const usersCollection = client.db('manufacture').collection('users')
         const ordersCollection = client.db('manufacture').collection('orders')
         const reviewsCollection = client.db('manufacture').collection('reviews')
+
+        const verifyAdmin = async(req, res,next)=>{
+            const requester = req.decoded.email
+            const requesterAccount = await usersCollection.findOne({email: requester})
+            if(requesterAccount.role === 'admin'){
+                next()
+            }else{
+                res.status(403).send({ message: 'Invalid Access' })
+            }
+        }
+
+
 
         app.get('/allParts', async (req, res) =>{
             const query = {}
@@ -63,10 +90,10 @@ async function run(){
             res.send(service)
         })
 
-        app.put('/inventory/:id', async (req, res) => {
-            // const email=  req.body.userInfo
-            // const decodedEmail = req.decoded.email
-            // if(email === decodedEmail){
+        app.put('/inventory/:id',verifyToken, async (req, res) => {
+            const email=  req.body.userInfo
+            const decodedEmail = req.decoded.email
+            if(email === decodedEmail){
                 const id = req.params.id
                 console.log(id)
                 const filter = {_id : ObjectId(id)}
@@ -78,22 +105,22 @@ async function run(){
                 }
                 const result = await partsCollection.updateOne(filter, updateDoc, options)
                 res.send(result)
-            // }else{
-            //     res.status(403).send({message: 'forbidden access'})
-            // }
+            }else{
+                res.status(403).send({message: 'forbidden access'})
+            }
         })
 
-        app.post('/inventory', async(req, res) => {
-            // const email=  req.body.userInfo
-            // const decodedEmail = req.decoded.email
-            // if(email === decodedEmail){
+        app.post('/inventory',verifyToken, async(req, res) => {
+            const email=  req.body.userInfo
+            const decodedEmail = req.decoded.email
+            if(email === decodedEmail){
                 const userOrder = req.body.orderItem
                 console.log('adding new order', userOrder )
                 const result = await ordersCollection.insertOne(userOrder)
                 res.send(result)
-            // }else{
-            //     res.status(403).send({message: 'forbidden access'})
-            // }
+            }else{
+                res.status(403).send({message: 'forbidden access'})
+            }
         })
         
         app.put('/user/:email', async(req, res)=>{
@@ -117,12 +144,12 @@ async function run(){
             res.send(user)
         })
 
-        app.get('/user', async(req, res)=>{
+        app.get('/user',verifyToken, verifyAdmin, async(req, res)=>{
             const user = await usersCollection.find().toArray()
             res.send(user)
         })
 
-        app.put('/users/:email', async(req, res)=>{
+        app.put('/users/:email', verifyToken, async(req, res)=>{
             const email = req.params.email
             const user = req.body
             console.log(user)
@@ -135,7 +162,7 @@ async function run(){
             res.send(result);
         })
 
-        app.put('/user/admin/:email', async(req, res)=>{
+        app.put('/user/admin/:email',verifyToken,verifyAdmin, async(req, res)=>{
             const email = req.params.email
             const role = req.body
             console.log(role)
@@ -154,34 +181,34 @@ async function run(){
             res.send(isAdmin)
         })
 
-        app.get('/order', async (req, res) => {
+        app.get('/order', verifyToken, async (req, res) => {
             const email = req.query.customer
-            // const decodedEmail = req.decoded.email
-            // if(decodedEmail === patientEmail) {
+            const decodedEmail = req.decoded.email
+            if(decodedEmail === email) {
                 const query = {email}
                 console.log(query);
 
                 const myOrder = await ordersCollection.find(query).toArray()
                 return res.send(myOrder)
-            // }
-            // else{
-            //     return res.status(403).send({ message: 'Invalid Access' })
-            // }
+            }
+            else{
+                return res.status(403).send({ message: 'Invalid Access' })
+            }
         })
 
-        app.get('/allOrder', async (req, res) =>{
+        app.get('/allOrder',verifyToken, verifyAdmin,async (req, res) =>{
             const query = {}
             const allOrder = await ordersCollection.find(query).toArray()
             res.send(allOrder)
         })
 
-        app.post('/parts', async(req, res) => {
+        app.post('/parts', verifyToken, async(req, res) => {
             const parts = req.body
             const result = await partsCollection.insertOne(parts)
             res.send(result)
         })
 
-        app.post('/reviews', async(req, res) => {
+        app.post('/reviews',verifyToken, async(req, res) => {
             const review = req.body
             console.log(review);
             const result = await reviewsCollection.insertOne(review)
@@ -195,7 +222,14 @@ async function run(){
         })
 
 
-        app.delete('/order/:id', async (req, res) => {
+        app.get('/order/:id',verifyToken, async (req, res) => {
+            const id =req.params.id
+            const filter ={_id: ObjectId(id)}
+            console.log(filter)
+            const result = await ordersCollection.findOne(filter)
+            res.send(result)
+        })
+        app.delete('/order/:id',verifyToken, async (req, res) => {
             const id =req.params.id
             const filter ={_id: ObjectId(id)}
             console.log(filter)
@@ -203,7 +237,7 @@ async function run(){
             res.send(result)
         })
 
-        app.delete('/parts/:id', async (req, res) => {
+        app.delete('/parts/:id',verifyToken,verifyAdmin, async (req, res) => {
             const id =req.params.id
             const filter ={_id: ObjectId(id)}
             console.log(filter)
