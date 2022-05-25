@@ -6,6 +6,7 @@ const app = express();
 const port = process.env.PORT || 4000
 require('dotenv').config();
 
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // mid ware
 app.use(cors())
@@ -38,6 +39,24 @@ async function run(){
         const usersCollection = client.db('manufacture').collection('users')
         const ordersCollection = client.db('manufacture').collection('orders')
         const reviewsCollection = client.db('manufacture').collection('reviews')
+        const paymentsCollection = client.db('manufacture').collection('payments')
+
+
+        app.post('/create-payment-intent',async (req, res)=>{
+            const service = req.body
+            console.log(service);
+            const price = service.totalPrice
+            const amount = price * 100
+            console.log(amount);
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount : amount,
+                currency : 'USD',
+                payment_method_types: ['card']
+            })
+            res.send({ clientSecret: paymentIntent.client_secret, })
+        })
+
+
 
         const verifyAdmin = async(req, res,next)=>{
             const requester = req.decoded.email
@@ -91,11 +110,10 @@ async function run(){
         })
 
         app.put('/inventory/:id',verifyToken, async (req, res) => {
-            const email=  req.body.userInfo
+            const email=  req.body.user.email
             const decodedEmail = req.decoded.email
             if(email === decodedEmail){
                 const id = req.params.id
-                console.log(id)
                 const filter = {_id : ObjectId(id)}
                 const updatedPD = req.body.restAvailable || req.body.newAvailable
                 console.log(updatedPD);
@@ -125,6 +143,7 @@ async function run(){
         
         app.put('/user/:email', async(req, res)=>{
             const email = req.params.email
+            console.log(email);
             const user = req.body
             const filter = {email}
             const options = { upsert: true };
@@ -133,7 +152,7 @@ async function run(){
             };
             const result = await usersCollection.updateOne(filter, updateDoc, options)
 
-            const token = jwt.sign({email},process.env.ACCESS_TOKEN_SECRET,{ expiresIn: '7d' })
+            const token = jwt.sign({email},process.env.ACCESS_TOKEN_SECRET,{ expiresIn: '1d' })
 
             res.send({result, token})
         })
@@ -194,6 +213,36 @@ async function run(){
             else{
                 return res.status(403).send({ message: 'Invalid Access' })
             }
+        })
+
+        app.put('/order/:id',verifyToken, async(req, res) => {
+            const id = req.params.id
+            const payment = req.body
+            const filter = {_id: ObjectId(id)} 
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    paid : true,
+                    transactionId: payment.transactionId
+                },
+            };
+            const result = await paymentsCollection.insertOne(payment)
+            const updatedOrder = await ordersCollection.updateOne(filter,updateDoc, options )
+            // res.send({updatedBooking, result})
+            res.send(updateDoc)
+        })
+
+        app.put('/orderShipped/:id',verifyToken, async(req, res) => {
+            const id = req.params.id
+            const filter = {_id: ObjectId(id)} 
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    shipped : true,
+                },
+            };
+            const updatedOrder = await ordersCollection.updateOne(filter,updateDoc, options )
+            res.send(updatedOrder)
         })
 
         app.get('/allOrder',verifyToken, verifyAdmin,async (req, res) =>{
