@@ -110,7 +110,7 @@ async function run(){
         })
 
         app.put('/inventory/:id',verifyToken, async (req, res) => {
-            const email=  req.body.user.email
+            const email=  req.body.userInfo
             const decodedEmail = req.decoded.email
             if(email === decodedEmail){
                 const id = req.params.id
