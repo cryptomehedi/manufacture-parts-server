@@ -193,7 +193,7 @@ async function run(){
                 return res.send({result})
             
         })
-        app.get('/admin/:email',verifyToken, async(req, res)=>{
+        app.get('/admin/:email', async(req, res)=>{
             const email = req.params.email
             const user = await usersCollection.findOne({email})
             const isAdmin = user.role === 'admin'
