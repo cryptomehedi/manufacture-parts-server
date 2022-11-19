@@ -15,7 +15,7 @@ const corsOptions ={
     optionSuccessStatus:200
 }
 
-app.use(cors())
+app.use(cors(corsOptions))
 app.use(express.json())
 
 // mongodb connection
