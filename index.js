@@ -10,7 +10,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // mid ware
 const corsOptions ={
-    origin:'http://localhost:3000', 
+    origin:'http://localhost:3000' || 'https://manufacture-parts-production.up.railway.app', 
     credentials:true,            //access-control-allow-credentials:true
     optionSuccessStatus:200
 }
