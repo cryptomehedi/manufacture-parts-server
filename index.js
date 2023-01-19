@@ -9,13 +9,14 @@ require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // mid ware
-const corsOptions ={
-    origin:'http://localhost:3000' || 'https://manufacture-parts-production.up.railway.app', 
-    credentials:true,            //access-control-allow-credentials:true
-    optionSuccessStatus:200
-}
+// const corsOptions ={
+//     origin:'http://localhost:3000' || 'https://manufacture-parts-production.up.railway.app', 
+//     credentials:true,            //access-control-allow-credentials:true
+//     optionSuccessStatus:200
+// }
 
-app.use(cors(corsOptions))
+// app.use(cors(corsOptions))
+app.use(cors())
 app.use(express.json())
 
 // mongodb connection
