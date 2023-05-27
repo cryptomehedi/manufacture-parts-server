@@ -76,7 +76,10 @@ async function run(){
         }
 
 
-
+        app.get('/test', async (req, res) =>{
+          
+            res.send({})
+        })
         app.get('/allParts', async (req, res) =>{
             const query = {}
             const cursor = partsCollection.find(query)
