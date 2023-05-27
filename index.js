@@ -76,10 +76,6 @@ async function run(){
         }
 
 
-        app.get('/test', async (req, res) =>{
-          
-            res.send({})
-        })
         app.get('/allParts', async (req, res) =>{
             const query = {}
             const cursor = partsCollection.find(query)
@@ -318,6 +314,10 @@ run().catch(console.dir)
 
 
 
+        app.get('/test', async (req, res) =>{
+          
+            res.send({})
+        })
 app.get('/', (req, res) => {
     res.send('Server running Successfully')
 })
