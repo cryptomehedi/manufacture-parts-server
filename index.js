@@ -41,7 +41,8 @@ function verifyToken(req, res, next) {
 
 async function run(){
     try {
-        client.connect()
+        await client.connect()
+        // client.connect()
         const partsCollection = client.db('manufacture').collection('parts')
         const usersCollection = client.db('manufacture').collection('users')
         const ordersCollection = client.db('manufacture').collection('orders')
