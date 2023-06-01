@@ -39,10 +39,10 @@ function verifyToken(req, res, next) {
     })
 }
 
-async function run(){
-    try {
-        await client.connect()
-        // client.connect()
+// async function run(){
+//     try {
+//         await client.connect()
+        client.connect()
         const partsCollection = client.db('manufacture').collection('parts')
         const usersCollection = client.db('manufacture').collection('users')
         const ordersCollection = client.db('manufacture').collection('orders')
@@ -300,13 +300,13 @@ async function run(){
             const result = await partsCollection.deleteOne(filter)
             res.send(result)
         })
-    }
-    finally{
+//     }
+//     finally{
         
-    }
-}
+//     }
+// }
 // run().catch(console.dir)
-run()
+// run()
 
 
 
